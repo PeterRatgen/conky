@@ -44,16 +44,20 @@ def get_to_file(URLs, header):
             wr.writerows(get_all_prices(URLs, head))
         else:
             if(datetime.datetime.now() - re[len(re)-1][2] > datetime.timedelta(seconds=5)):
-                print("difference is greater than 1 hour")
+                # print("difference is greater than 1 hour")
                 wr = csv.writer(resultFile, dialect='excel')
                 rows = get_all_prices(Target_URLs, head);
+                hours = 3
+                k = int(len(re)-(len(URLs)*hours))
                 for i in range(len(URLs)):
-                    k = i + len(URLs)*(len(re)/len(URLs))
-                    rows[i].append(re[k][2]-rows[i][2])
+                    # print("Comparing", re[k][0], "and", rows[i][0])
+                    rows[i].append(int(re[k][1])-int(rows[i][1]))
+                    rows[i].append(round(100-(int(rows[i][1]))/int(re[k][1])*100,2))
+                    k+=1
                 print(rows)
                 wr.writerows(rows)
             else:
-                print("difference is not greater than 1 hour")
+                # print("difference is not greater than 1 hour")
 
 def print_file():
     with open("output.csv",'r+') as resultFile:
