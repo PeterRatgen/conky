@@ -1,0 +1,37 @@
+#!/usr/bin/lua
+conky.config = {
+	alignment = 'tl',
+	background = true,
+  color2 = 'A6A6A6',
+  double_buffer = true,
+  draw_borders = false,
+  draw_graph_borders = true,
+  draw_outline = false,
+  draw_shades = false,
+	cpu_avg_samples = 2,
+	default_color = 'FFFFFF',
+	double_buffer = true,
+	font = 'Bitstream Vera Sans:size=10',
+	gap_x = 30,
+	gap_y = 50,
+	minimum_width = 400,
+	no_buffers = true,
+  own_window = true,
+  own_window_transparent = true,
+	own_window_class = 'conky',
+	own_window_argb_visual = true,
+	own_window_argb_value = 145,
+	own_window_hints = 'undecorated,below,sticky,skip_taskbar,skip_pager',
+	own_window_colour = '#000000',
+	-- own_window_type = 'desktop',
+	update_interval = 3,
+	use_xft = true,
+  xinerama_head = 3,
+}
+conky.text = [[
+${voffset 8}$color2${font Bitstream Vera Sans:size=16}${time %A}$font\
+${voffset -8}$alignr$color${font Bitstream Vera Sans:size=38}${time %e}$font
+$color${voffset -30}$color${font Bitstream Vera Sans:size=18}${time %b}$font\
+${voffset -3} $color${font Bitstream Vera Sans:size=20}${time %Y}$font$color2$hr
+${execi 5 spotify-lyrics-once}
+]]

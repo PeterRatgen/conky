@@ -30,6 +30,7 @@ conky.config = {
     cpu_avg_samples = 2,
     update_interval = 1,
     total_run_times = 0,
+    xinerama_head = 0,
     imlib_cache_size = 0,
 };
 
