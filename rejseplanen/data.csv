@@ -1,20 +1,20 @@
-Re 2665,18:59,Ringe St.,Odense St.
-Bus 31,19:00,Seden Syd,OBC Syd Plads A 
 Bus 61,19:00,Stige,OBC Syd Plads B 
-Bus 91,19:00,Herluf Tr. Vej,OBC Syd Plads A 
-Bus 61,19:01,Stige,Th. B. Thriges Gade 
+Bus 61,19:02,Stige,Th. B. Thriges Gade 
 Bus 61,19:08,Højby,Th. B. Thriges Gade 
+ICL 54067,19:10,Sønderborg St. og Hobro St.,Odense St.
+IC 54867,19:13,Esbjerg St.,Odense St.
 Re 4665,19:13,Svendborg St.,Odense St.
 Bus 151,19:15,Kerteminde,OBC Syd Plads B 
 Bus 151,19:15,Assens,OBC Syd Plads C 
-Bus 41,19:15,Bolbro,OBC Syd Plads D 
+Bus 41,19:15,Universitetet,OBC Syd Plads A 
 Bus 61,19:15,Højby,OBC Syd Plads C 
-IC 160,19:25,CPH Lufthavn,Odense St.
-Bus 110,19:25,Assens,OBC Nord Plads I 
-Bus 131,19:25,Haarby,OBC Nord Plads I 
+Bus 81,19:15,Fraugde,OBC Syd Plads A 
+Bus 42,19:15,Tarup,OBC Syd Plads D 
+Bus 23,19:15,Tornbjerg,OBC Syd Plads B 
+IC 54160,19:25,CPH Lufthavn,Odense St.
+Bus 111,19:25,Faaborg,OBC Nord Plads I 
+Bus 130,19:25,Assens,OBC Nord Plads I 
 Bus 141,19:25,Faaborg,OBC Nord Plads H 
 Bus 191,19:25,Bogense,OBC Nord Plads H 
 Bus 140,19:25,Otterup,OBC Nord Plads H 
 Bus 195,19:25,Nyborg,OBC Nord Plads H 
-Bus 110,19:26,Assens,Th. B. Thriges Gade 
-Bus 31,19:30,Seden Syd,OBC Syd Plads A 
