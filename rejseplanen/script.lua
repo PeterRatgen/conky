@@ -31,25 +31,25 @@ function conky_main()
 end
 
 function print_all_journeys (cr, journey_data)
-  offset = 65
-  for i = 0, 20, 1
+  offset = 60
+  for i = 0, 21, 1
   do
-    journey_row(cr, journey_data[i+1], offset*i)
+    print_journey_row(cr, journey_data[i+1], offset*i)
   end
 end
 
 function print_journey_row (cr, data_row, offset)
   x = 50
-  text_height = 33
+  text_height = 31
 
   journey_row_width = 880
-  journey_row_height = 50
+  journey_row_height = 45
   cairo_set_source_rgba (cr, 200/255, 200/255, 200/255, 0.2);
   draw_rounded_rectangle(x, offset, journey_row_width, journey_row_height)
 
-  highlight_offset = 10
+  highlight_offset = 9
   highlight_width = 120
-  highlight_height = 50 - highlight_offset*2
+  highlight_height = journey_row_height - highlight_offset*2
   if string.match(data_row["number"], "IC") or string.match(data_row["number"], "Re") then
     cairo_set_source_rgba (cr, 200/255, 20/255, 20/255, 0.7);
     draw_rounded_rectangle (70,offset + highlight_offset, highlight_width, highlight_height)
@@ -90,6 +90,7 @@ end
 
 function rejse_parse()
   local data_list = {}
+  table.insert(data_list, {number = "Linje", time = "Tidspunkt", destination = "Til", depart = "Fra"})
   for line in io.lines("/home/peter/.config/conky/rejseplanen/data.csv") do
     local number, time, destination, depart = line:match("%s*(.*),%s*(.*),%s*(.*),%s*(.* )")
     data_list[#data_list + 1] = {number = number, time = time, destination = destination, depart = depart}
