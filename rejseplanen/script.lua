@@ -1,5 +1,4 @@
 require 'cairo'
-require 'table'
 
 function conky_main()
   if conky_window == nil then
@@ -16,18 +15,15 @@ function conky_main()
 
   journey_data = rejse_parse()
 
-
   local f = io.popen("stat -c %Y /home/peter/.config/conky/rejseplanen/data.csv")
   local last_modified = f:read()
   last_modified = os.date("%X", last_modified)
-
   table.insert(journey_data, { number = "Sidst opdateret: " .. last_modified })
 
   print_all_journeys(cr, journey_data)
 
   cairo_surface_destroy(cs)
   cr = nil
-
 end
 
 function print_all_journeys (cr, journey_data)
