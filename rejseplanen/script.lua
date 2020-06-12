@@ -72,8 +72,11 @@ function print_journey_row (cr, data_row, offset)
   cairo_show_text (cr, data_row["time"])
   if delay ~= nil
   then
+    cairo_set_source_rgb (cr, 1, 0.05, 0.05)
     cairo_move_to (cr, 295, text_height+offset) 
     cairo_show_text (cr, " +" .. tostring(delay))
+    cairo_stroke (cr)
+    cairo_set_source_rgb (cr, 1, 1, 1)
   end
   cairo_move_to (cr, 370, text_height+offset) 
   cairo_show_text (cr, data_row["destination"])
