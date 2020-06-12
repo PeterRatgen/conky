@@ -16,7 +16,11 @@ with open('/home/peter/.config/conky/rejseplanen/data.csv', 'w') as file:
     writer = csv.writer(file)
     for i in departure_list:
         suss = re.sub('\(.*\)','',i['stop'])
-        writer.writerow([i['name'], i['time'], i['direction'], suss])
+        if "rtTime" in i.keys():
+            print("true")
+            writer.writerow([i['name'], i['time'], i['direction'], suss, i['rtTime']])
+        else:
+            writer.writerow([i['name'], i['time'], i['direction'], suss])
 
 time = os.path.getmtime('/home/peter/.config/conky/rejseplanen/data.csv')
 

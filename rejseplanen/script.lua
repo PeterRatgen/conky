@@ -54,11 +54,27 @@ function print_journey_row (cr, data_row, offset)
     draw_rounded_rectangle (70,offset + highlight_offset, highlight_width, highlight_height)
   end
 
+  local delay
+  if data_row["rtTime"] ~= nil
+  then
+    local r_hour, r_minute = data_row["rtTime"]:match("(%d+):(%d+)")
+    local hour, minute = data_row["time"]:match("(%d+):(%d+)")
+    if r_hour and r_minute and hour and minute ~= nil
+    then
+      delay = math.abs((tonumber(r_hour)-tonumber(hour))*60 + tonumber(minute)-tonumber(r_minute))
+    end
+  end
+
   cairo_set_source_rgb (cr, 1,1,1);
   cairo_move_to (cr, 80, text_height+offset) 
   cairo_show_text (cr, data_row["number"])
   cairo_move_to (cr, 225, text_height+offset) 
   cairo_show_text (cr, data_row["time"])
+  if delay ~= nil
+  then
+    cairo_move_to (cr, 295, text_height+offset) 
+    cairo_show_text (cr, " +" .. tostring(delay))
+  end
   cairo_move_to (cr, 370, text_height+offset) 
   cairo_show_text (cr, data_row["destination"])
   cairo_move_to (cr, 650, text_height+offset) 
@@ -88,8 +104,8 @@ function rejse_parse()
   local data_list = {}
   table.insert(data_list, {number = "Linje", time = "Tidspunkt", destination = "Til", depart = "Fra"})
   for line in io.lines("/home/peter/.config/conky/rejseplanen/data.csv") do
-    local number, time, destination, depart = line:match("%s*(.*),%s*(.*),%s*(.*),%s*(.* )")
-    data_list[#data_list + 1] = {number = number, time = time, destination = destination, depart = depart}
+    local number, time, destination, depart, rtTime = line:match("%s*(.*),%s*(.*),%s*(.*),%s*(.* ),?([%d:]*)")
+    data_list[#data_list + 1] = {number = number, time = time, destination = destination, depart = depart, rtTime = rtTime}
   end
   return data_list
 end
