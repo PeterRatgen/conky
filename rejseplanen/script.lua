@@ -13,28 +13,26 @@ function conky_main()
   cairo_select_font_face (cr, font, font_slant, font_face);
   cairo_set_font_size (cr, font_size)
 
-  journey_data = rejse_parse()
+  postg = require "luasql.postgres"
+  env = postg.postgres()
+  connection = assert (env:connect('rejseplanen','peter','peter1609','127.0.0.1',5432))
+  cur = connection:execute("SELECT * FROM (SELECT * FROM departures ORDER BY id DESC LIMIT 20) as foo ORDER BY id ASC;")
 
-  local f = io.popen("stat -c %Y /home/peter/.config/conky/rejseplanen/data.csv")
-  local last_modified = f:read()
-  last_modified = os.date("%X", last_modified)
-  table.insert(journey_data, { number = "Sidst opdateret: " .. last_modified })
-
-  print_all_journeys(cr, journey_data)
+  line = cur:fetch({}, "a")
+  offset = 60
+  off_mod = 0
+  while line do
+    print_journey_row(cr, line, offset*off_mod)
+    line = cur:fetch(line, "a")
+    off_mod = off_mod + 1
+  end
 
   cairo_surface_destroy(cs)
   cr = nil
 end
 
-function print_all_journeys (cr, journey_data)
-  offset = 60
-  for i = 0, 21, 1
-  do
-    print_journey_row(cr, journey_data[i+1], offset*i)
-  end
-end
 
-function print_journey_row (cr, data_row, offset)
+function print_journey_row (cr, line, offset)
   x = 50
   text_height = 31
 
@@ -46,19 +44,19 @@ function print_journey_row (cr, data_row, offset)
   highlight_offset = 9
   highlight_width = 120
   highlight_height = journey_row_height - highlight_offset*2
-  if string.match(data_row["number"], "IC") or string.match(data_row["number"], "Re") then
+  if string.match(line.name, "IC") or string.match(line.name, "Re") then
     cairo_set_source_rgba (cr, 200/255, 20/255, 20/255, 0.7);
     draw_rounded_rectangle (70,offset + highlight_offset, highlight_width, highlight_height)
-  elseif string.match(data_row["number"], "Bus") then 
+  elseif string.match(line.name, "Bus") then 
     cairo_set_source_rgba (cr, 20/255, 200/255, 20/255, 0.7);
     draw_rounded_rectangle (70,offset + highlight_offset, highlight_width, highlight_height)
   end
 
   local delay
-  if data_row["rtTime"] ~= nil
+  local hour, minute, second = line.time:match("(%d+):(%d+):(%d+)")
+  if line.rttime ~= nil
   then
-    local r_hour, r_minute = data_row["rtTime"]:match("(%d+):(%d+)")
-    local hour, minute = data_row["time"]:match("(%d+):(%d+)")
+    local r_hour, r_minute, r_second = line.rttime:match("(%d+):(%d+):(%d+)")
     if r_hour and r_minute and hour and minute ~= nil
     then
       delay = math.abs((tonumber(r_hour)-tonumber(hour))*60 + tonumber(minute)-tonumber(r_minute))
@@ -67,9 +65,9 @@ function print_journey_row (cr, data_row, offset)
 
   cairo_set_source_rgb (cr, 1,1,1);
   cairo_move_to (cr, 80, text_height+offset) 
-  cairo_show_text (cr, data_row["number"])
+  cairo_show_text (cr, line.name)
   cairo_move_to (cr, 225, text_height+offset) 
-  cairo_show_text (cr, data_row["time"])
+  cairo_show_text (cr, string.format("%s:%s", hour, minute))
   if delay ~= nil
   then
     cairo_set_source_rgb (cr, 1, 0.05, 0.05)
@@ -79,9 +77,9 @@ function print_journey_row (cr, data_row, offset)
     cairo_set_source_rgb (cr, 1, 1, 1)
   end
   cairo_move_to (cr, 370, text_height+offset) 
-  cairo_show_text (cr, data_row["destination"])
+  cairo_show_text (cr, line.direction)
   cairo_move_to (cr, 650, text_height+offset) 
-  cairo_show_text (cr, data_row["depart"])
+  cairo_show_text (cr, string.match(line.stop, '%s*([%a %.]*)'))
   cairo_stroke (cr)
 end
 
@@ -103,15 +101,6 @@ function draw_rounded_rectangle(x, y, width, height)
   cairo_stroke (cr)
 end
 
-function rejse_parse()
-  local data_list = {}
-  table.insert(data_list, {number = "Linje", time = "Tidspunkt", destination = "Til", depart = "Fra"})
-  for line in io.lines("/home/peter/.config/conky/rejseplanen/data.csv") do
-    local number, time, destination, depart, rtTime = line:match("%s*(.*),%s*(.*),%s*(.*),%s*(.* ),?([%d:]*)")
-    data_list[#data_list + 1] = {number = number, time = time, destination = destination, depart = depart, rtTime = rtTime}
-  end
-  return data_list
-end
 
 
 

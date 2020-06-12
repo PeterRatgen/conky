@@ -1,0 +1,12 @@
+CREATE TABLE departures(
+  id SERIAL PRIMARY KEY,
+  transport_id integer NOT NULL,
+  date DATE NOT NULL,
+  time TIME(4) NOT NULL,
+  name VARCHAR(32) NOT NULL,
+  stop VARCHAR(64) NOT NULL,
+  direction VARCHAR (64) NOT NULL,
+  rtTime TIME(4),
+  rtDate DATE,
+  ts timestamp NOT NULL DEFAULT NOW()
+);
