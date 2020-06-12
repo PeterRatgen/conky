@@ -39,12 +39,10 @@ try:
       connection.commit()
 
 finally:
-        #closing database connection.
     if(connection):
         cursor.close()
         connection.close()
         print("PostgreSQL connection is closed")
                                                         
 
-time = os.path.getmtime('/home/peter/.config/conky/rejseplanen/data.csv')
 

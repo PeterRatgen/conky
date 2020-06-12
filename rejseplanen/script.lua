@@ -13,37 +13,40 @@ function conky_main()
   cairo_select_font_face (cr, font, font_slant, font_face);
   cairo_set_font_size (cr, font_size)
 
+  -- Initialize database and connection
   postg = require "luasql.postgres"
   env = postg.postgres()
   connection = assert (env:connect('rejseplanen','peter','peter1609','127.0.0.1',5432))
+  -- fetch from the database
   cur = connection:execute("SELECT * FROM (SELECT * FROM departures ORDER BY id DESC LIMIT 20) as foo ORDER BY id ASC;")
-
+  -- iterate over cursor and print
   line = cur:fetch({}, "a")
   offset = 60
-  off_mod = 0
+  offset_modifier = 0
   while line do
-    print_journey_row(cr, line, offset*off_mod)
+    print_journey_row(cr, line, offset * offset_modifier)
     line = cur:fetch(line, "a")
-    off_mod = off_mod + 1
+    offset_modifier = offset_modifier + 1
   end
-
+  -- cleanup
   cairo_surface_destroy(cs)
   cr = nil
 end
 
 
 function print_journey_row (cr, line, offset)
-  x = 50
-  text_height = 31
-
+  x = 50 --vertical offset of cards
+  text_height = 31 -- text height relative to the card
+  -- Draw the rectange
   journey_row_width = 880
   journey_row_height = 45
   cairo_set_source_rgba (cr, 200/255, 200/255, 200/255, 0.2);
   draw_rounded_rectangle(x, offset, journey_row_width, journey_row_height)
-
+  -- Calculate the placement of background rectangle
   highlight_offset = 9
   highlight_width = 120
   highlight_height = journey_row_height - highlight_offset*2
+  -- Draw train or bus background rectangle
   if string.match(line.name, "IC") or string.match(line.name, "Re") then
     cairo_set_source_rgba (cr, 200/255, 20/255, 20/255, 0.7);
     draw_rounded_rectangle (70,offset + highlight_offset, highlight_width, highlight_height)
@@ -51,7 +54,7 @@ function print_journey_row (cr, line, offset)
     cairo_set_source_rgba (cr, 20/255, 200/255, 20/255, 0.7);
     draw_rounded_rectangle (70,offset + highlight_offset, highlight_width, highlight_height)
   end
-
+  -- Calculate the delay
   local delay
   local hour, minute, second = line.time:match("(%d+):(%d+):(%d+)")
   if line.rttime ~= nil
@@ -62,12 +65,14 @@ function print_journey_row (cr, line, offset)
       delay = math.abs((tonumber(r_hour)-tonumber(hour))*60 + tonumber(minute)-tonumber(r_minute))
     end
   end
-
+  -- Print name of departure
   cairo_set_source_rgb (cr, 1,1,1);
   cairo_move_to (cr, 80, text_height+offset) 
   cairo_show_text (cr, line.name)
+  -- Print time of departure
   cairo_move_to (cr, 225, text_height+offset) 
   cairo_show_text (cr, string.format("%s:%s", hour, minute))
+  -- Print the delay
   if delay ~= nil
   then
     cairo_set_source_rgb (cr, 1, 0.05, 0.05)
@@ -76,8 +81,10 @@ function print_journey_row (cr, line, offset)
     cairo_stroke (cr)
     cairo_set_source_rgb (cr, 1, 1, 1)
   end
+  -- Print direction
   cairo_move_to (cr, 370, text_height+offset) 
   cairo_show_text (cr, line.direction)
+  -- Print stop of departure
   cairo_move_to (cr, 650, text_height+offset) 
   cairo_show_text (cr, string.match(line.stop, '%s*([%a %.]*)'))
   cairo_stroke (cr)
