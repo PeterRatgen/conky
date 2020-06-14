@@ -22,12 +22,19 @@ function conky_main()
   -- iterate over cursor and print
   line = cur:fetch({}, "a")
   offset = 60
-  offset_modifier = 0
+  offset_modifier = 1
+  print_journey_row (cr, offset_modifier * offset,'Tid','', 'Navn', nil, 'Retning', 'Stop')
+  offset_modifier = offset_modifier + 1
+  last_modified = line.ts
   while line do
-    print_journey_row(cr, line, offset * offset_modifier)
+    journey_rows(cr, line, offset * offset_modifier)
     line = cur:fetch(line, "a")
     offset_modifier = offset_modifier + 1
   end
+
+  last_mod = string.format("%s: %s",'Last modified:',last_modified)
+  print_journey_row(cr, offset_modifier * offset, '', '', last_mod, nil, '', '')
+
   cur:close()
   connection:close()
   env:close()
@@ -36,8 +43,22 @@ function conky_main()
   cr = nil
 end
 
+function journey_rows (cr, line, offset)
+  -- Calculate the delay
+  local delay
+  local hour, minute, second = line.time:match("(%d+):(%d+):(%d+)")
+  if line.rttime ~= nil
+  then
+    local r_hour, r_minute, r_second = line.rttime:match("(%d+):(%d+):(%d+)")
+    if r_hour and r_minute and hour and minute ~= nil
+    then
+      delay = math.abs((tonumber(r_hour)-tonumber(hour))*60 + tonumber(minute)-tonumber(r_minute))
+    end
+  end
+  print_journey_row(cr, offset, hour, minute, line.name, delay, line.direction, line.stop)
+end
 
-function print_journey_row (cr, line, offset)
+function print_journey_row (cr, offset, hour, minute, name, delay, direction, stop )
   x = 50 --vertical offset of cards
   text_height = 31 -- text height relative to the card
   -- Draw the rectange
@@ -50,28 +71,17 @@ function print_journey_row (cr, line, offset)
   highlight_width = 120
   highlight_height = journey_row_height - highlight_offset*2
   -- Draw train or bus background rectangle
-  if string.match(line.name, "IC") or string.match(line.name, "Re") then
+  if string.match(name, "IC") or string.match(name, "Re") then
     cairo_set_source_rgba (cr, 200/255, 20/255, 20/255, 0.7);
     draw_rounded_rectangle (70,offset + highlight_offset, highlight_width, highlight_height)
-  elseif string.match(line.name, "Bus") then 
+  elseif string.match(name, "Bus") then 
     cairo_set_source_rgba (cr, 20/255, 200/255, 20/255, 0.7);
     draw_rounded_rectangle (70,offset + highlight_offset, highlight_width, highlight_height)
-  end
-  -- Calculate the delay
-  local delay
-  local hour, minute, second = line.time:match("(%d+):(%d+):(%d+)")
-  if line.rttime ~= nil
-  then
-    local r_hour, r_minute, r_second = line.rttime:match("(%d+):(%d+):(%d+)")
-    if r_hour and r_minute and hour and minute ~= nil
-    then
-      delay = math.abs((tonumber(r_hour)-tonumber(hour))*60 + tonumber(minute)-tonumber(r_minute))
-    end
   end
   -- Print name of departure
   cairo_set_source_rgb (cr, 1,1,1);
   cairo_move_to (cr, 80, text_height+offset) 
-  cairo_show_text (cr, line.name)
+  cairo_show_text (cr, name)
   -- Print time of departure
   cairo_move_to (cr, 225, text_height+offset) 
   cairo_show_text (cr, string.format("%s:%s", hour, minute))
@@ -86,10 +96,10 @@ function print_journey_row (cr, line, offset)
   end
   -- Print direction
   cairo_move_to (cr, 370, text_height+offset) 
-  cairo_show_text (cr, line.direction)
+  cairo_show_text (cr, direction)
   -- Print stop of departure
   cairo_move_to (cr, 650, text_height+offset) 
-  cairo_show_text (cr, string.match(line.stop, '%s*([%a %.]*)'))
+  cairo_show_text (cr, string.match(stop, '%s*([%a %.]*)'))
   cairo_stroke (cr)
 end
 
