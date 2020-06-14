@@ -28,6 +28,9 @@ function conky_main()
     line = cur:fetch(line, "a")
     offset_modifier = offset_modifier + 1
   end
+  cur:close()
+  connection:close()
+  env:close()
   -- cleanup
   cairo_surface_destroy(cs)
   cr = nil

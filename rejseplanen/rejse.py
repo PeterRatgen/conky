@@ -31,12 +31,11 @@ try:
       insert_query = "INSERT INTO departures (transport_id, date, time, name, direction, rtTime, rtDate) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
       insertion_record = (i['id'], i['date'], i['time'], i['name'], i['stop'], i['direction'], i['rtTime'], i['rtDate'])
       cursor.execute(insert_query, insertion_record)
-      connection.commit()
     else:
       insert_query = "INSERT INTO departures (transport_id, date, time, name, stop, direction) VALUES (%s, %s, %s, %s, %s, %s)"
       insertion_record = (i['id'], i['date'], i['time'], i['name'], i['stop'], i['direction'])
       cursor.execute(insert_query, insertion_record)
-      connection.commit()
+  connection.commit()
 
 finally:
     if(connection):
