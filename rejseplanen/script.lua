@@ -32,7 +32,7 @@ function conky_main()
     offset_modifier = offset_modifier + 1
   end
 
-  last_mod = string.format("%s: %s",'Last modified:',last_modified)
+  last_mod = string.format("%s: %s",'Last modified', last_modified:match("%d*%-%d*%-%d*%s%d+:%d+:%d+"))
   print_journey_row(cr, offset_modifier * offset, '', '', last_mod, nil, '', '')
 
   cur:close()
