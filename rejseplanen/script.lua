@@ -54,6 +54,9 @@ function journey_rows (cr, line, offset)
     then
       delay = math.abs((tonumber(r_hour)*60+tonumber(r_minute)) - (tonumber(hour)*60+tonumber(minute)))
     end
+    if delay >= 10 then
+      delay = string.format("%d:%d", r_hour, r_minute)
+    end 
   end
   print_journey_row(cr, offset, hour, minute, line.name, delay, line.direction, line.stop)
 end
@@ -96,7 +99,11 @@ function print_journey_row (cr, offset, hour, minute, name, delay, direction, st
   then
     cairo_set_source_rgb (cr, 1, 0.05, 0.05)
     cairo_move_to (cr, 295, text_height+offset) 
-    cairo_show_text (cr, " +" .. tostring(delay))
+    if string.len(tostring(delay)) <= 3 then
+      cairo_show_text (cr, " +" .. tostring(delay))
+    else
+      cairo_show_text (cr, tostring(delay))
+    end
     cairo_stroke (cr)
     cairo_set_source_rgb (cr, 1, 1, 1)
   end
