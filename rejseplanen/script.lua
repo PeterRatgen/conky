@@ -52,7 +52,7 @@ function journey_rows (cr, line, offset)
     local r_hour, r_minute, r_second = line.rttime:match("(%d+):(%d+):(%d+)")
     if r_hour and r_minute and hour and minute ~= nil
     then
-      delay = math.abs((tonumber(r_hour)-tonumber(hour))*60 + tonumber(minute)-tonumber(r_minute))
+      delay = math.abs((tonumber(r_hour)*60+tonumber(r_minute)) - (tonumber(hour)*60+tonumber(minute)))
     end
   end
   print_journey_row(cr, offset, hour, minute, line.name, delay, line.direction, line.stop)
@@ -68,15 +68,21 @@ function print_journey_row (cr, offset, hour, minute, name, delay, direction, st
   draw_rounded_rectangle(x, offset, journey_row_width, journey_row_height)
   -- Calculate the placement of background rectangle
   highlight_offset = 9
-  highlight_width = 120
+  word_width = 15.5
   highlight_height = journey_row_height - highlight_offset*2
   -- Draw train or bus background rectangle
-  if string.match(name, "IC") or string.match(name, "Re") then
+  if string.match(name, "ICL") then
+    cairo_set_source_rgba (cr, 175/255, 178/255, 24/255, 0.7);
+    draw_rounded_rectangle (70,offset + highlight_offset, word_width * string.len(name), highlight_height)
+  elseif string.match(name, "IC") then
     cairo_set_source_rgba (cr, 200/255, 20/255, 20/255, 0.7);
-    draw_rounded_rectangle (70,offset + highlight_offset, highlight_width, highlight_height)
+    draw_rounded_rectangle (70,offset + highlight_offset, word_width * string.len(name), highlight_height)
+  elseif string.match(name, "Re") then
+    cairo_set_source_rgba (cr, 6/255, 118/255, 6/255, 0.7);
+    draw_rounded_rectangle (70,offset + highlight_offset, word_width * string.len(name), highlight_height)
   elseif string.match(name, "Bus") then 
     cairo_set_source_rgba (cr, 20/255, 200/255, 20/255, 0.7);
-    draw_rounded_rectangle (70,offset + highlight_offset, highlight_width, highlight_height)
+    draw_rounded_rectangle (70,offset + highlight_offset, word_width * string.len(name), highlight_height)
   end
   -- Print name of departure
   cairo_set_source_rgb (cr, 1,1,1);
