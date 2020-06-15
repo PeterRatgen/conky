@@ -6,8 +6,8 @@ function conky_main()
   end
   local cs = cairo_xlib_surface_create(conky_window.display, conky_window.drawable, conky_window.visual, conky_window.width, conky_window.height)
   cr = cairo_create(cs)
-  font = "Inconsolata"
-  font_size = 25
+  font = "Noto Sans"
+  font_size = 18
   font_slant = CAIRO_FONT_SLANT_NORMAL
   font_face = CAIRO_FONT_WEIGHT_NORMAL
   cairo_select_font_face (cr, font, font_slant, font_face);
@@ -15,8 +15,25 @@ function conky_main()
 
   news_data = get_data()
 
-  cairo_move_to(50,50)
-  cairo_show_text (cr, news_data[1]['title'])
+  cairo_set_source_rgb (cr, 1,1,1)
+  for i = 1, 20, 1 do
+    hyperlink = string.format("uri='%s'", news_data[i]['link'])
+    font_size = 20
+    cairo_set_font_size (cr, font_size)
+    cairo_move_to(cr, 50, 60*i)
+    cairo_show_text (cr, news_data[i]['title'])
+    cairo_stroke(cr)
+
+    font_size = 14
+    cairo_set_font_size (cr, font_size)
+    cairo_move_to(cr, 50, 60*i + 20)
+    cairo_show_text (cr, news_data[i]['description'])
+    cairo_stroke(cr)
+  end
+
+
+  cairo_surface_destroy(cs)
+  cr = nil
 end
 
 function get_data()
