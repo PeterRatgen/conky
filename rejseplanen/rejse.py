@@ -22,13 +22,10 @@ try:
 
   cursor = connection.cursor()
 
-    #cursor.execute("INSERT INTO departures (id, date, time, name, direction, rtTime) VALUES (461082109, '12.06.20', '15:56', 'Bus 10C', 'Citybus', '15:57');")
-    #connection.commit()
-
   for i in departure_list:
     suss = re.sub('\(.*\)','',i['stop'])
     if "rtTime" in i.keys():
-      insert_query = "INSERT INTO departures (transport_id, date, time, name, direction, rtTime, rtDate) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+      insert_query = "INSERT INTO departures (transport_id, date, time, name, stop, direction, rtTime, rtDate) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
       insertion_record = (i['id'], i['date'], i['time'], i['name'], i['stop'], i['direction'], i['rtTime'], i['rtDate'])
       cursor.execute(insert_query, insertion_record)
     else:
