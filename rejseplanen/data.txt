@@ -1,4 +1,4 @@
-CREATE TABLE departures(
+CREATE TABLE departures (
   id SERIAL PRIMARY KEY,
   transport_id integer NOT NULL,
   date DATE NOT NULL,
@@ -8,5 +8,12 @@ CREATE TABLE departures(
   direction VARCHAR (64) NOT NULL,
   rtTime TIME(4),
   rtDate DATE,
-  ts timestamp NOT NULL DEFAULT NOW()
+  ts timestamp NOT NULL DEFAULT NOW(),
+  journey_detail_ref VARCHAR(256)
+);
+
+CREATE TABLE journey_table (
+  id SERIAL PRIMARY KEY,
+  departure_id integer REFERENCES departures (id), 
+  query json NOT NULL
 );

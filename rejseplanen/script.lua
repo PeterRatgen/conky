@@ -25,6 +25,10 @@ function conky_main()
   offset_modifier = 1
   print_journey_row (cr, offset_modifier * offset,'Tid','', 'Navn', nil, 'Retning', 'Stop')
   offset_modifier = offset_modifier + 1
+  
+  
+  --cur2 = connection:execute("SELECT (query) FROM journey_table WHERE departure_id=")
+
   last_modified = line.ts
   while line do
     journey_rows(cr, line, offset * offset_modifier)
@@ -34,6 +38,7 @@ function conky_main()
 
   last_mod = string.format("%s: %s",'Last modified', last_modified:match("%d*%-%d*%-%d*%s%d+:%d+:%d+"))
   print_journey_row(cr, offset_modifier * offset, '', '', last_mod, nil, '', '')
+  cairo_stroke(cr)
 
   cur:close()
   connection:close()
@@ -116,6 +121,28 @@ function print_journey_row (cr, offset, hour, minute, name, delay, direction, st
   cairo_stroke (cr)
 end
 
+function get_data(url)
+  local json = require("JSON")
+  local http = require("socket.http")
+  inspect = require("inspect")
+
+  local body, statusCode, headers, statusText = http.request(url)
+
+  local data = json:decode(body)
+  num_stops = data["JourneyDetail"]["JourneyName"]["routeIdxTo"] + 1
+  journey_data = {}; journey_data.num_stops = num_stops;
+  stops = {}
+  for i = 1, num_stops, 1 do
+    if data["JourneyDetail"]["Stop"][i]["name"]:match("Zone") then
+      stops[i] = data["JourneyDetail"]["Stop"][i]["name"]:match("[%a/æøåÆØÅéÉ%d%. ]*")
+    else
+      stops[i] = data["JourneyDetail"]["Stop"][i]["name"]:match("[%a/æøåÆØÅéÉ%d%. ]*")
+    end
+  end
+   journey_data.stops = stops
+  return journey_data
+end
+
 function draw_rounded_rectangle(x, y, width, height)
   corner_radius = height/4
   aspect = 1.0
@@ -133,6 +160,7 @@ function draw_rounded_rectangle(x, y, width, height)
   cairo_fill_preserve (cr);
   cairo_stroke (cr)
 end
+
 
 
 
