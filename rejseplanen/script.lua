@@ -26,8 +26,23 @@ function conky_main()
   print_journey_row (cr, offset_modifier * offset,'Tid','', 'Navn', nil, 'Retning', 'Stop')
   offset_modifier = offset_modifier + 1
   
-  
-  --cur2 = connection:execute("SELECT (query) FROM journey_table WHERE departure_id=")
+  cur2 = connection:execute(string.format("SELECT (query) FROM journey_table WHERE departure_id=%d", line.id))
+
+  local json = require("JSON")
+  inspect = require("inspect")
+  query = cur2:fetch({}, "a")
+
+  local data = json:decde(query['query'])
+  num_stops = data["JourneyDetail"]["JourneyName"]["routeIdxTo"] + 1
+  stops = {}
+  for i = 1, num_stops, 1 do
+    if not data["JourneyDetail"]["Stop"][i]["name"]:match("Zone") then
+      stops[#stops + 1] = data["JourneyDetail"]["Stop"][i]["name"]:match("[%a/æøåÆØÅéÉ%d%. ]*")
+    end
+  end 
+  journey_data = {}; 
+  journey_data.num_stops = #stops;
+  journey_data.stops = stops
 
   last_modified = line.ts
   while line do
