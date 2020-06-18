@@ -43,6 +43,14 @@ function conky_main()
   journey_data = {}; 
   journey_data.num_stops = #stops;
   journey_data.stops = stops
+  
+  cairo_set_font_size(cr, 18)
+  for i = 1, journey_data.num_stops, 1 do
+    cairo_move_to(cr, 950, 50+23*i)
+    cairo_show_text(cr, journey_data.stops[i]['name'])
+  end
+  cairo_stroke(cr)
+
 
   last_modified = line.ts
   while line do
@@ -134,28 +142,6 @@ function print_journey_row (cr, offset, hour, minute, name, delay, direction, st
   cairo_move_to (cr, 650, text_height+offset) 
   cairo_show_text (cr, string.match(stop, '%s*([%a %.]*)'))
   cairo_stroke (cr)
-end
-
-function get_data(url)
-  local json = require("JSON")
-  local http = require("socket.http")
-  inspect = require("inspect")
-
-  local body, statusCode, headers, statusText = http.request(url)
-
-  local data = json:decode(body)
-  num_stops = data["JourneyDetail"]["JourneyName"]["routeIdxTo"] + 1
-  journey_data = {}; journey_data.num_stops = num_stops;
-  stops = {}
-  for i = 1, num_stops, 1 do
-    if data["JourneyDetail"]["Stop"][i]["name"]:match("Zone") then
-      stops[i] = data["JourneyDetail"]["Stop"][i]["name"]:match("[%a/æøåÆØÅéÉ%d%. ]*")
-    else
-      stops[i] = data["JourneyDetail"]["Stop"][i]["name"]:match("[%a/æøåÆØÅéÉ%d%. ]*")
-    end
-  end
-   journey_data.stops = stops
-  return journey_data
 end
 
 function draw_rounded_rectangle(x, y, width, height)
