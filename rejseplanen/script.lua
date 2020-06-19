@@ -33,8 +33,6 @@ function conky_main()
     offset_modifier = offset_modifier + 1
   end
   cur:close()
-  local inspect = require "inspect"
-  print(inspect(journey_data))
   draw_journey(cr, journey_data) 
   connection:close()
   env:close()
@@ -96,7 +94,6 @@ function get_journey_data(line, connection)
 
   local data = json:decode(query['query'])
   local inspect = require "inspect"
-  print(inspect(data))
   num_stops = data["JourneyDetail"]["JourneyName"]["routeIdxTo"] + 1
   stops = {}
   for i = 1, num_stops, 1 do
