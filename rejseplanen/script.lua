@@ -16,7 +16,7 @@ function conky_main()
   -- Initialize database and connection
   postg = require "luasql.postgres"
   env = postg.postgres()
-  connection = assert (env:connect('rejseplanen','peter','peter1609','127.0.0.1',5432))
+  connection = assert (env:connect('rejseplanen','peter','peter1609','127.0.0.1', 5432))
   -- fetch from the database
   cur = connection:execute("SELECT * FROM (SELECT * FROM departures ORDER BY id DESC LIMIT 20) as foo ORDER BY id ASC;")
   -- iterate over cursor and print
@@ -25,11 +25,42 @@ function conky_main()
   offset_modifier = 1
   print_journey_row (cr, offset_modifier * offset,'Tid','', 'Navn', nil, 'Retning', 'Stop')
   offset_modifier = offset_modifier + 1
-  
+  last_modified = line.ts
+  while line do
+    journey_rows(cr, line, offset * offset_modifier)
+    line = cur:fetch(line, "a")
+    offset_modifier = offset_modifier + 1
+  end
+  cur:close()
+
+  journey_data = get_journey_data(connection)
+  draw_journey(cr, journey_data)
+
+  connection:close()
+  env:close()
+
+  last_mod = string.format("%s: %s",'Last modified', last_modified:match("%d*%-%d*%-%d*%s%d+:%d+:%d+"))
+  print_journey_row(cr, offset_modifier * offset, '', '', last_mod, nil, '', '')
+  cairo_stroke(cr)
+
+  -- cleanup
+  cairo_surface_destroy(cs)
+  cr = nil
+end
+
+function draw_journey(cr, journey_data)
+  cairo_set_font_size(cr, 18)
+  for i = 1, journey_data.num_stops, 1 do
+    cairo_move_to(cr, 950, 50+23*i)
+    cairo_show_text(cr, journey_data.stops[i]['name'])
+  end
+  cairo_stroke(cr)
+end
+
+function get_journey_data(connection)
   cur2 = connection:execute(string.format("SELECT (query) FROM journey_table WHERE departure_id=%d", line.id))
 
   local json = require("JSON")
-  inspect = require("inspect")
   query = cur2:fetch({}, "a")
 
   local data = json:decde(query['query'])
@@ -40,35 +71,9 @@ function conky_main()
       stops[#stops + 1] = data["JourneyDetail"]["Stop"][i]["name"]:match("[%a/æøåÆØÅéÉ%d%. ]*")
     end
   end 
-  journey_data = {}; 
-  journey_data.num_stops = #stops;
-  journey_data.stops = stops
-  
-  cairo_set_font_size(cr, 18)
-  for i = 1, journey_data.num_stops, 1 do
-    cairo_move_to(cr, 950, 50+23*i)
-    cairo_show_text(cr, journey_data.stops[i]['name'])
-  end
-  cairo_stroke(cr)
-
-
-  last_modified = line.ts
-  while line do
-    journey_rows(cr, line, offset * offset_modifier)
-    line = cur:fetch(line, "a")
-    offset_modifier = offset_modifier + 1
-  end
-
-  last_mod = string.format("%s: %s",'Last modified', last_modified:match("%d*%-%d*%-%d*%s%d+:%d+:%d+"))
-  print_journey_row(cr, offset_modifier * offset, '', '', last_mod, nil, '', '')
-  cairo_stroke(cr)
-
-  cur:close()
-  connection:close()
-  env:close()
-  -- cleanup
-  cairo_surface_destroy(cs)
-  cr = nil
+  journey_data = {}; journey_data.num_stops = #stops; journey_data.stops = stops
+  cur2:close()
+  return journey_data
 end
 
 function journey_rows (cr, line, offset)
@@ -161,8 +166,3 @@ function draw_rounded_rectangle(x, y, width, height)
   cairo_fill_preserve (cr);
   cairo_stroke (cr)
 end
-
-
-
-
-
