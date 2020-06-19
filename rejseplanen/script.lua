@@ -26,19 +26,20 @@ function conky_main()
   print_journey_row (cr, offset_modifier * offset,'Tid','', 'Navn', nil, 'Retning', 'Stop')
   offset_modifier = offset_modifier + 1
   last_modified = line.ts
+  journey_data = get_journey_data(line, connection)
   while line do
     journey_rows(cr, line, offset * offset_modifier)
     line = cur:fetch(line, "a")
     offset_modifier = offset_modifier + 1
   end
   cur:close()
-
-  journey_data = get_journey_data(connection)
-  draw_journey(cr, journey_data)
-
+  local inspect = require "inspect"
+  print(inspect(journey_data))
+  draw_journey(cr, journey_data) 
   connection:close()
   env:close()
 
+  cairo_set_font_size(cr, font_size)
   last_mod = string.format("%s: %s",'Last modified', last_modified:match("%d*%-%d*%-%d*%s%d+:%d+:%d+"))
   print_journey_row(cr, offset_modifier * offset, '', '', last_mod, nil, '', '')
   cairo_stroke(cr)
@@ -49,26 +50,64 @@ function conky_main()
 end
 
 function draw_journey(cr, journey_data)
+  line_x = 1080
+  stop_x = 1100
+  depTime_x = 1020
+  rtDepTime_x = 960
   cairo_set_font_size(cr, 18)
+  line_width = get_line_width(journey_data)
   for i = 1, journey_data.num_stops, 1 do
-    cairo_move_to(cr, 950, 50+23*i)
+    cairo_arc(cr, line_x, 44+line_width*i, 5, 0, 2*3.14)
+    cairo_fill(cr)
+    cairo_stroke(cr)
+  end
+  cairo_set_line_width (cr, 2.0);
+  cairo_move_to(cr, line_x, 44+line_width)
+  cairo_line_to(cr, line_x, 44+line_width*journey_data.num_stops)
+  cairo_stroke(cr)
+  for i = 1, journey_data.num_stops, 1 do
+    cairo_move_to(cr, rtDepTime_x, 50+line_width*i)
+    if journey_data.stops[i]['rtDepTime'] then
+      cairo_show_text(cr, journey_data.stops[i]['rtDepTime'])
+    elseif journey_data.stops[i]['rtArrTime'] then
+      cairo_show_text(cr, journey_data.stops[i]['rtArrTime'])
+    end
+    cairo_move_to(cr, depTime_x, 50+line_width*i)
+    if journey_data.stops[i]['depTime'] then
+      cairo_show_text(cr, journey_data.stops[i]['depTime'])
+    else
+      cairo_show_text(cr, journey_data.stops[i]['arrTime'])
+    end
+    cairo_move_to(cr, stop_x, 50+line_width*i)
     cairo_show_text(cr, journey_data.stops[i]['name'])
   end
   cairo_stroke(cr)
 end
 
-function get_journey_data(connection)
+function get_line_width(journey_data)
+  return 1310/journey_data.num_stops
+end
+
+function get_journey_data(line, connection)
   cur2 = connection:execute(string.format("SELECT (query) FROM journey_table WHERE departure_id=%d", line.id))
 
   local json = require("JSON")
   query = cur2:fetch({}, "a")
 
-  local data = json:decde(query['query'])
+  local data = json:decode(query['query'])
+  local inspect = require "inspect"
+  print(inspect(data))
   num_stops = data["JourneyDetail"]["JourneyName"]["routeIdxTo"] + 1
   stops = {}
   for i = 1, num_stops, 1 do
     if not data["JourneyDetail"]["Stop"][i]["name"]:match("Zone") then
-      stops[#stops + 1] = data["JourneyDetail"]["Stop"][i]["name"]:match("[%a/æøåÆØÅéÉ%d%. ]*")
+      stop = {}
+      stop.name = data["JourneyDetail"]["Stop"][i]["name"]:match("[%a/æøåÆØÅéÉ%d%. ]*")
+      stop.depTime = data["JourneyDetail"]["Stop"][i]['depTime']
+      stop.rtDepTime = data["JourneyDetail"]["Stop"][i]['rtDepTime']
+      stop.arrTime = data["JourneyDetail"]["Stop"][i]['arrTime']
+      stop.rtArrTime = data["JourneyDetail"]["Stop"][i]['rtArrTime']
+      stops[#stops + 1] = stop
     end
   end 
   journey_data = {}; journey_data.num_stops = #stops; journey_data.stops = stops
