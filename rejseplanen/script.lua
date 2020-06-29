@@ -133,6 +133,7 @@ function journey_rows (cr, line, offset)
         delay = string.format("%d:%d", r_hour, r_minute)
       else 
         delay = string.format("%d:0%d", r_hour, r_minute)
+      end
     end 
   end
   print_journey_row(cr, offset, hour, minute, line.name, delay, line.direction, line.stop)
