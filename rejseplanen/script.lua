@@ -129,7 +129,7 @@ function journey_rows (cr, line, offset)
       delay = math.abs((tonumber(r_hour)*60+tonumber(r_minute)) - (tonumber(hour)*60+tonumber(minute)))
     end
     if delay >= 10 then
-      if r_minute < 10 then
+      if tonumber(r_minute) < 10 then
         delay = string.format("%d:%d", r_hour, r_minute)
       else 
         delay = string.format("%d:0%d", r_hour, r_minute)
