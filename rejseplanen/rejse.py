@@ -6,6 +6,7 @@ import os
 import datetime
 import psycopg2
 from psycopg2.extras import Json
+import json
 
 baseurl = 'http://xmlopen.rejseplanen.dk/bin/rest.exe/'
 departureboardurl = 'departureBoard?id=461077600'
@@ -13,10 +14,10 @@ formaturl = '&format=json'
 
 jsonurl = requests.get(baseurl+departureboardurl+formaturl).json()
 departure_list = jsonurl['DepartureBoard']['Departure']
-print(departure_list)
+print(json.dumps(departure_list))
 
 journey_detail = requests.get(departure_list[0]['JourneyDetailRef']['ref']).json()
-print(journey_detail)
+print(json.dumps(journey_detail,indent=4, sort_keys=True))
 
 try:
   connection = psycopg2.connect(user = "peter",
@@ -28,7 +29,6 @@ try:
   cursor = connection.cursor()
 
   for i in departure_list:
-    suss = re.sub('\(.*\)','',i['stop'])
     if "rtTime" in i.keys():
       insert_query = "INSERT INTO departures (transport_id, date, time, name, stop, direction, journey_detail_ref, rtTime, rtDate) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
       insertion_record = (i['id'], i['date'], i['time'], i['name'], i['stop'], i['direction'], i['JourneyDetailRef']['ref'], i['rtTime'], i['rtDate'])

@@ -37,7 +37,8 @@ function conky_main()
 end
 
 function get_data()
-  local xml2lua = require("lua-json")
+  local xml2lua = require("xml2lua")
+  local handler = require("xmlhandler.tree")
   local https = require("ssl.https")
   
   local body, statusCode, headers, statusText = https.request("https://www.dr.dk/nyheder/service/feeds/allenyheder")

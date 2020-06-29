@@ -19,28 +19,30 @@ function conky_main()
   connection = assert (env:connect('rejseplanen','peter','peter1609','127.0.0.1', 5432))
   -- fetch from the database
   cur = connection:execute("SELECT * FROM (SELECT * FROM departures ORDER BY id DESC LIMIT 20) as foo ORDER BY id ASC;")
-  -- iterate over cursor and print
   line = cur:fetch({}, "a")
-  offset = 60
-  offset_modifier = 1
-  print_journey_row (cr, offset_modifier * offset,'Tid','', 'Navn', nil, 'Retning', 'Stop')
-  offset_modifier = offset_modifier + 1
+  row_offset = 60
+  row_count = 1
+  -- print legend for departure rows 
+  print_journey_row (cr, row_count * row_offset,'Tid','', 'Navn', nil, 'Retning', 'Stop')
+  row_count = row_count + 1
   last_modified = line.ts
   journey_data = get_journey_data(line, connection)
-  local inspect = require "inspect"
+  -- iterate over cursor and print
   while line do
-    journey_rows(cr, line, offset * offset_modifier)
+    journey_rows(cr, line, row_offset * row_count)
     line = cur:fetch(line, "a")
-    offset_modifier = offset_modifier + 1
+    row_count = row_count + 1
   end
+  -- clean up database connections
   cur:close()
   draw_journey(cr, journey_data) 
   connection:close()
   env:close()
 
   cairo_set_font_size(cr, font_size)
+  -- draw the time the top printed row was inserted
   last_mod = string.format("%s: %s",'Last modified', last_modified:match("%d*%-%d*%-%d*%s%d+:%d+:%d+"))
-  print_journey_row(cr, offset_modifier * offset, '', '', last_mod, nil, '', '')
+  print_journey_row(cr, row_count * row_offset, '', '', last_mod, nil, '', '')
   cairo_stroke(cr)
 
   -- cleanup
@@ -48,13 +50,15 @@ function conky_main()
   cr = nil
 end
 
+-- draw one journey using data
 function draw_journey(cr, journey_data)
   line_x = 1080
   stop_x = 1100
   depTime_x = 1020
   rtDepTime_x = 960
   cairo_set_font_size(cr, 18)
-  line_width = get_line_width(journey_data)
+  line_width = 1310/journey_data.num_stops
+  -- draw circles and line
   for i = 1, journey_data.num_stops, 1 do
     cairo_arc(cr, line_x, 44+line_width*i, 5, 0, 2*3.14)
     cairo_fill(cr)
@@ -65,36 +69,37 @@ function draw_journey(cr, journey_data)
   cairo_line_to(cr, line_x, 44+line_width*journey_data.num_stops)
   cairo_stroke(cr)
   for i = 1, journey_data.num_stops, 1 do
+    -- draw real time departure or arrival
     cairo_move_to(cr, rtDepTime_x, 50+line_width*i)
     if journey_data.stops[i]['rtDepTime'] then
       cairo_show_text(cr, journey_data.stops[i]['rtDepTime'])
     elseif journey_data.stops[i]['rtArrTime'] then
       cairo_show_text(cr, journey_data.stops[i]['rtArrTime'])
     end
+    -- draw planned departure or arrival, departure is not present on last stop
     cairo_move_to(cr, depTime_x, 50+line_width*i)
     if journey_data.stops[i]['depTime'] then
       cairo_show_text(cr, journey_data.stops[i]['depTime'])
     else
       cairo_show_text(cr, journey_data.stops[i]['arrTime'])
     end
+    -- draw name of stop
     cairo_move_to(cr, stop_x, 50+line_width*i)
     cairo_show_text(cr, journey_data.stops[i]['name'])
   end
   cairo_stroke(cr)
 end
 
-function get_line_width(journey_data)
-  return 1310/journey_data.num_stops
-end
-
+-- Get the data for for a journey from a specific line using an existing connection 
 function get_journey_data(line, connection)
   cur2 = connection:execute(string.format("SELECT (query) FROM journey_table WHERE departure_id=%d", line.id))
 
+  -- get data from cursor decode the json data 
   local json = require("JSON")
   query = cur2:fetch({}, "a")
-
   local data = json:decode(query['query'])
-  local inspect = require "inspect"
+
+  -- construct the journey_data table of the stops on the journey 
   if data["JourneyDetail"]["JourneyName"]["routeIdxTo"] then
     num_stops = data["JourneyDetail"]["JourneyName"]["routeIdxTo"] + 1
   else
@@ -117,10 +122,11 @@ function get_journey_data(line, connection)
   return journey_data
 end
 
-function journey_rows (cr, line, offset)
-  -- Calculate the delay
+function journey_rows (cr, line, row_offset)
   local delay
+  -- match the time of arrival string
   local hour, minute, second = line.time:match("(%d+):(%d+):(%d+)")
+  -- calculate the delay
   if line.rttime ~= nil
   then
     local r_hour, r_minute, r_second = line.rttime:match("(%d+):(%d+):(%d+)")
@@ -128,7 +134,8 @@ function journey_rows (cr, line, offset)
     then
       delay = math.abs((tonumber(r_hour)*60+tonumber(r_minute)) - (tonumber(hour)*60+tonumber(minute)))
     end
-    if delay >= 10 then
+    -- if the delay is larger than 9 min, print exact timestamp 
+    if delay > 9 then
       if 9 < tonumber(r_minute)  then
         delay = string.format("%d:%d", r_hour, r_minute)
       else 
@@ -136,17 +143,18 @@ function journey_rows (cr, line, offset)
       end
     end 
   end
-  print_journey_row(cr, offset, hour, minute, line.name, delay, line.direction, line.stop)
+  print_journey_row(cr, row_offset, hour, minute, line.name, delay, line.direction, line.stop)
 end
 
-function print_journey_row (cr, offset, hour, minute, name, delay, direction, stop )
-  x = 50 --vertical offset of cards
+function print_journey_row (cr, row_offset, hour, minute, name, delay, direction, stop )
+  x = 50 --vertical row_offset of cards
   text_height = 31 -- text height relative to the card
   -- Draw the rectange
   journey_row_width = 880
   journey_row_height = 45
   cairo_set_source_rgba (cr, 200/255, 200/255, 200/255, 0.2);
-  draw_rounded_rectangle(x, offset, journey_row_width, journey_row_height)
+  -- draw the journey row 
+  draw_rounded_rectangle(x, row_offset, journey_row_width, journey_row_height)
   -- Calculate the placement of background rectangle
   highlight_offset = 9
   word_width = 15.5
@@ -154,29 +162,29 @@ function print_journey_row (cr, offset, hour, minute, name, delay, direction, st
   -- Draw train or bus background rectangle
   if string.match(name, "ICL") then
     cairo_set_source_rgba (cr, 175/255, 178/255, 24/255, 0.7);
-    draw_rounded_rectangle (70,offset + highlight_offset, word_width * string.len(name), highlight_height)
   elseif string.match(name, "IC") then
     cairo_set_source_rgba (cr, 200/255, 20/255, 20/255, 0.7);
-    draw_rounded_rectangle (70,offset + highlight_offset, word_width * string.len(name), highlight_height)
   elseif string.match(name, "Re") then
     cairo_set_source_rgba (cr, 6/255, 118/255, 6/255, 0.7);
-    draw_rounded_rectangle (70,offset + highlight_offset, word_width * string.len(name), highlight_height)
   elseif string.match(name, "Bus") then 
     cairo_set_source_rgba (cr, 20/255, 200/255, 20/255, 0.7);
-    draw_rounded_rectangle (70,offset + highlight_offset, word_width * string.len(name), highlight_height)
+  else 
+    -- draw transparent for case where non journey
+    cairo_set_source_rgba (cr, 1,1,1,0);
   end
+  draw_rounded_rectangle (70,row_offset + highlight_offset, word_width * string.len(name), highlight_height)
   -- Print name of departure
   cairo_set_source_rgb (cr, 1,1,1);
-  cairo_move_to (cr, 80, text_height+offset) 
+  cairo_move_to (cr, 80, text_height+row_offset) 
   cairo_show_text (cr, name)
   -- Print time of departure
-  cairo_move_to (cr, 225, text_height+offset) 
+  cairo_move_to (cr, 225, text_height+row_offset) 
   cairo_show_text (cr, string.format("%s:%s", hour, minute))
-  -- Print the delay
+  -- Print the delay if existent
   if delay ~= nil
   then
     cairo_set_source_rgb (cr, 1, 0.05, 0.05)
-    cairo_move_to (cr, 295, text_height+offset) 
+    cairo_move_to (cr, 295, text_height+row_offset) 
     if string.len(tostring(delay)) <= 3 then
       cairo_show_text (cr, " +" .. tostring(delay))
     else
@@ -186,10 +194,10 @@ function print_journey_row (cr, offset, hour, minute, name, delay, direction, st
     cairo_set_source_rgb (cr, 1, 1, 1)
   end
   -- Print direction
-  cairo_move_to (cr, 370, text_height+offset) 
+  cairo_move_to (cr, 370, text_height+row_offset) 
   cairo_show_text (cr, direction)
   -- Print stop of departure
-  cairo_move_to (cr, 650, text_height+offset) 
+  cairo_move_to (cr, 650, text_height+row_offset) 
   cairo_show_text (cr, string.match(stop, '%s*([%a %.]*)'))
   cairo_stroke (cr)
 end
