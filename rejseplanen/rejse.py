@@ -13,8 +13,10 @@ formaturl = '&format=json'
 
 jsonurl = requests.get(baseurl+departureboardurl+formaturl).json()
 departure_list = jsonurl['DepartureBoard']['Departure']
+print(departure_list)
 
 journey_detail = requests.get(departure_list[0]['JourneyDetailRef']['ref']).json()
+print(journey_detail)
 
 try:
   connection = psycopg2.connect(user = "peter",

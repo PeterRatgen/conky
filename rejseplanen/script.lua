@@ -27,6 +27,7 @@ function conky_main()
   offset_modifier = offset_modifier + 1
   last_modified = line.ts
   journey_data = get_journey_data(line, connection)
+  local inspect = require "inspect"
   while line do
     journey_rows(cr, line, offset * offset_modifier)
     line = cur:fetch(line, "a")
@@ -94,12 +95,16 @@ function get_journey_data(line, connection)
 
   local data = json:decode(query['query'])
   local inspect = require "inspect"
-  num_stops = data["JourneyDetail"]["JourneyName"]["routeIdxTo"] + 1
+  if data["JourneyDetail"]["JourneyName"]["routeIdxTo"] then
+    num_stops = data["JourneyDetail"]["JourneyName"]["routeIdxTo"] + 1
+  else
+    num_stops = data["JourneyDetail"]["JourneyName"][0]["routeIdxTo"] + 1
+  end
   stops = {}
   for i = 1, num_stops, 1 do
     if not data["JourneyDetail"]["Stop"][i]["name"]:match("Zone") then
       stop = {}
-      stop.name = data["JourneyDetail"]["Stop"][i]["name"]:match("[%a/æøåÆØÅéÉ%d%. ]*")
+      stop.name = data["JourneyDetail"]["Stop"][i]["name"]:match("[%a/æøüåÆØÅéÉ%d%. ]*")
       stop.depTime = data["JourneyDetail"]["Stop"][i]['depTime']
       stop.rtDepTime = data["JourneyDetail"]["Stop"][i]['rtDepTime']
       stop.arrTime = data["JourneyDetail"]["Stop"][i]['arrTime']
@@ -124,7 +129,10 @@ function journey_rows (cr, line, offset)
       delay = math.abs((tonumber(r_hour)*60+tonumber(r_minute)) - (tonumber(hour)*60+tonumber(minute)))
     end
     if delay >= 10 then
-      delay = string.format("%d:%d", r_hour, r_minute)
+      if r_minute < 10 then
+        delay = string.format("%d:%d", r_hour, r_minute)
+      else 
+        delay = string.format("%d:0%d", r_hour, r_minute)
     end 
   end
   print_journey_row(cr, offset, hour, minute, line.name, delay, line.direction, line.stop)
