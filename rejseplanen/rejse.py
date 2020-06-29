@@ -14,10 +14,8 @@ formaturl = '&format=json'
 
 jsonurl = requests.get(baseurl+departureboardurl+formaturl).json()
 departure_list = jsonurl['DepartureBoard']['Departure']
-print(json.dumps(departure_list))
 
 journey_detail = requests.get(departure_list[0]['JourneyDetailRef']['ref']).json()
-print(json.dumps(journey_detail,indent=4, sort_keys=True))
 
 try:
   connection = psycopg2.connect(user = "peter",
@@ -52,7 +50,6 @@ finally:
     if(connection):
         cursor.close()
         connection.close()
-        print("PostgreSQL connection is closed")
                                                         
 
 
